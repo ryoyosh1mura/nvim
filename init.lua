@@ -110,7 +110,9 @@ do
   vim.o.number = true
   -- You can also add relative line numbers, to help with jumping.
   --  Experiment for yourself to see if you like it!
-  -- vim.o.relativenumber = true
+  vim.o.relativenumber = true
+  -- Show absolute line number followed by relative line number, e.g. "  12   3"
+  vim.o.statuscolumn = '%s%=%{v:lnum} %{v:relnum} '
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -184,6 +186,25 @@ do
   -- Clear highlights on search when pressing <Esc> in normal mode
   --  See `:help hlsearch`
   vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+
+  -- Toggle line numbers (absolute + relative) on/off, across all windows/tabs
+  vim.keymap.set('n', '<leader>tl', function()
+    local enabled = not vim.o.number
+    local statuscolumn = enabled and '%s%=%{v:lnum} %{v:relnum} ' or ''
+
+    -- Update the global default so future splits/tabs pick it up too
+    vim.o.number = enabled
+    vim.o.relativenumber = enabled
+    vim.o.statuscolumn = statuscolumn
+
+    -- number/relativenumber/statuscolumn are window-local, so also update
+    -- every currently open window across all tabs
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      vim.api.nvim_set_option_value('number', enabled, { win = win })
+      vim.api.nvim_set_option_value('relativenumber', enabled, { win = win })
+      vim.api.nvim_set_option_value('statuscolumn', statuscolumn, { win = win })
+    end
+  end, { desc = '[T]oggle [L]ine numbers' })
 
   -- Diagnostic Config & Keymaps
   --  See `:help vim.diagnostic.Opts`
