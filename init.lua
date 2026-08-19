@@ -240,6 +240,60 @@ do
   -- or just use <C-\><C-n> to exit terminal mode
   vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
+  -- Toggle a terminal window docked at the bottom of the screen with <C-/>.
+  -- The terminal buffer/job is created once and reused: toggling never kills
+  -- the shell, it only shows or hides the window.
+  do
+    local terminal_bufnr = nil -- shared terminal buffer id, nil until first opened
+    local TERMINAL_HEIGHT = 15
+
+    -- Find the window in the *current* tabpage that shows the shared terminal
+    -- buffer, or nil if it isn't visible here.
+    local function find_terminal_win()
+      if not terminal_bufnr then return nil end
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if vim.api.nvim_win_get_buf(win) == terminal_bufnr then return win end
+      end
+      return nil
+    end
+
+    -- Show the shared terminal in a split at the bottom of the current tab,
+    -- starting the job only the first time this runs.
+    local function open_terminal()
+      vim.cmd 'botright split'
+
+      if terminal_bufnr and vim.api.nvim_buf_is_loaded(terminal_bufnr) then
+        vim.api.nvim_win_set_buf(0, terminal_bufnr)
+      else
+        vim.cmd.terminal()
+        terminal_bufnr = vim.api.nvim_get_current_buf()
+      end
+
+      vim.api.nvim_win_set_height(0, TERMINAL_HEIGHT)
+      vim.cmd.startinsert()
+    end
+
+    local function toggle_terminal()
+      local win = find_terminal_win()
+      if win then
+        -- Closing the only window in the only tab would quit Neovim entirely
+        -- (same as :q on the last window), so refuse instead of doing that.
+        if #vim.api.nvim_tabpage_list_wins(0) == 1 and vim.fn.tabpagenr '$' == 1 then
+          vim.notify("Can't hide terminal: it is the only window", vim.log.levels.WARN)
+          return
+        end
+        vim.api.nvim_win_close(win, false)
+      else
+        open_terminal()
+      end
+    end
+
+    -- NOTE: some terminals/tmux send <C-_> instead of <C-/>, so map both to
+    -- the same toggle. Works in normal mode and inside the terminal itself.
+    vim.keymap.set({ 'n', 't' }, '<C-/>', toggle_terminal, { desc = 'Toggle terminal window' })
+    vim.keymap.set({ 'n', 't' }, '<C-_>', toggle_terminal, { desc = 'Toggle terminal window' })
+  end
+
   -- TIP: Disable arrow keys in normal mode
   -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
   -- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
