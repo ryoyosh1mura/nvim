@@ -120,6 +120,9 @@ do
   -- Don't show the mode, since it's already in the status line
   vim.o.showmode = false
 
+  -- Always show the tabline (used by mini.tabline to list open buffers)
+  vim.o.showtabline = 2
+
   -- Sync clipboard between OS and Neovim.
   --  Schedule the setting after `UiEnter` because it can increase startup-time.
   --  Remove this option if you want your OS clipboard to remain independent.
@@ -254,6 +257,11 @@ do
   vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
   vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
   vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+  -- Cycle through open buffers (pairs with mini.tabline for visual feedback)
+  -- NOTE: This overrides the default H/L (move to top/bottom of screen)
+  vim.keymap.set('n', 'L', '<cmd>bnext<CR>', { desc = 'Go to next buffer' })
+  vim.keymap.set('n', 'H', '<cmd>bprevious<CR>', { desc = 'Go to previous buffer' })
 
   -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
   -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -465,6 +473,9 @@ do
   -- cursor location to LINE:COLUMN
   ---@diagnostic disable-next-line: duplicate-set-field
   statusline.section_location = function() return '%2l:%-2v' end
+
+  -- Show all open buffers as a tabline at the top of the screen
+  require('mini.tabline').setup()
 
   -- ... and there is more!
   --  Check out: https://github.com/nvim-mini/mini.nvim
