@@ -272,6 +272,19 @@ do
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
   })
+
+  -- Terminal buffers don't get along with a non-zero 'scrolloff' (see
+  -- `:h 'scrolloff'` and neovim/neovim#11072): the terminal keeps trying to
+  -- auto-follow its own bottom line, and 'scrolloff' fights that by forcing
+  -- extra context lines around the cursor, which is what makes scrolling up
+  -- with `k` in Normal mode look "stuck". Disable it only for the terminal's
+  -- own window (`vim.wo`, window-scoped) so normal buffers keep the value
+  -- set in SECTION 1.
+  vim.api.nvim_create_autocmd('TermOpen', {
+    desc = 'Disable scrolloff in terminal windows so scrolling up works',
+    group = vim.api.nvim_create_augroup('kickstart-terminal-scrolloff', { clear = true }),
+    callback = function() vim.wo.scrolloff = 0 end,
+  })
 end
 
 -- ============================================================
