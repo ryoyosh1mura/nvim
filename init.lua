@@ -272,6 +272,45 @@ do
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
   })
+
+  -- Reload buffers that were changed outside of Neovim (git checkout, another
+  -- editor, an agent writing files, ...).
+  --
+  -- 'autoread' is already on by default in Neovim, but it only reloads a buffer
+  -- once Neovim actually compares it against the file on disk, and that
+  -- comparison only happens when `:checktime` runs. Nothing triggers it on its
+  -- own, so the buffer keeps showing stale content until you run `:e!`.
+  -- These autocmds call `:checktime` at the moments where a stale buffer is
+  -- most likely and most annoying.
+  --  See `:help 'autoread'` and `:help :checktime`
+  vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'CursorHoldI', 'TermLeave' }, {
+    desc = 'Check for external file changes and reload the buffer',
+    group = vim.api.nvim_create_augroup('kickstart-auto-checktime', { clear = true }),
+    callback = function()
+      -- Running `:checktime` while a command line is being typed can interrupt
+      -- the input with a reload prompt, so stay out of the way there
+      if vim.fn.mode() == 'c' then return end
+
+      -- Skip buffers that are not backed by a file (terminal, quickfix, ...).
+      -- `:checktime` without arguments checks every buffer anyway, so nothing
+      -- is lost by not firing on those
+      if vim.bo.buftype ~= '' then return end
+
+      vim.cmd 'checktime'
+    end,
+  })
+
+  -- Tell the user when a buffer was swapped out from under them, so the content
+  -- never changes silently
+  --  See `:help FileChangedShellPost`
+  vim.api.nvim_create_autocmd('FileChangedShellPost', {
+    desc = 'Notify when a file was reloaded after an external change',
+    group = vim.api.nvim_create_augroup('kickstart-file-changed-notify', { clear = true }),
+    callback = function()
+      local name = vim.fn.fnamemodify(vim.fn.expand '<afile>', ':~:.')
+      vim.notify(string.format('%s: changed on disk, buffer reloaded', name), vim.log.levels.WARN)
+    end,
+  })
 end
 
 -- ============================================================
