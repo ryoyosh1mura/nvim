@@ -112,7 +112,10 @@ do
   --  Experiment for yourself to see if you like it!
   vim.o.relativenumber = true
   -- Show absolute line number followed by relative line number, e.g. "  12   3"
-  vim.o.statuscolumn = '%s%=%{v:lnum} %{v:relnum} '
+  --  `%s` is the sign column and `%C` the fold column. A custom 'statuscolumn'
+  --  replaces the whole gutter, so without `%C` the fold markers would never be
+  --  drawn, no matter what 'foldcolumn' is set to. See `:help 'statuscolumn'`
+  vim.o.statuscolumn = '%s%C%=%{v:lnum} %{v:relnum} '
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -169,6 +172,26 @@ do
   -- Minimal number of screen lines to keep above and below the cursor.
   vim.o.scrolloff = 10
 
+  -- [[ Folding ]]
+  --  A fold collapses a range of lines into a single summary line. Two kinds of
+  --  folds are used in this config: diff windows fold every region that is
+  --  *unchanged* (`foldmethod=diff`), and source files fold syntax constructs
+  --  such as functions and branches (`foldmethod=expr`, see SECTION 9).
+  --  `<leader>z` opens/closes them all, `za` toggles the one under the cursor.
+  --  See `:help folds`
+  vim.o.foldenable = true
+
+  -- 'foldlevel' is the depth up to which folds stay open; 0 closes everything.
+  --  'foldlevelstart' is the value a window gets when it starts editing a new
+  --  buffer, so 99 means "open a file with every fold already unfolded".
+  --  Diffview sets `foldlevel = 0` on its own diff windows, so a diff still
+  --  opens with the unchanged parts folded away.
+  vim.o.foldlevelstart = 99
+
+  -- Reserve one column in the gutter for the fold markers, so that foldable
+  --  regions are visible before they are folded. Set it to '0' to hide it.
+  vim.o.foldcolumn = '1'
+
   -- if performing an operation that would fail due to unsaved changes in the buffer (like `:q`),
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
@@ -190,7 +213,7 @@ do
   -- Toggle line numbers (absolute + relative) on/off, across all windows/tabs
   vim.keymap.set('n', '<leader>tl', function()
     local enabled = not vim.o.number
-    local statuscolumn = enabled and '%s%=%{v:lnum} %{v:relnum} ' or ''
+    local statuscolumn = enabled and '%s%C%=%{v:lnum} %{v:relnum} ' or ''
 
     -- Update the global default so future splits/tabs pick it up too
     vim.o.number = enabled
@@ -205,6 +228,22 @@ do
       vim.api.nvim_set_option_value('statuscolumn', statuscolumn, { win = win })
     end
   end, { desc = '[T]oggle [L]ine numbers' })
+
+  -- Toggle every fold in the current window: the unchanged regions of a diff,
+  --  or the functions/branches/loops of a source file (see SECTION 9).
+  --  `zR` opens every fold and sets 'foldlevel' to the deepest level found,
+  --  `zM` closes every fold and sets it back to 0. That makes 'foldlevel'
+  --  itself the state of the toggle: 0 means everything is currently closed.
+  --  See `:help fold-commands`
+  --
+  -- NOTE: `:normal` is used *without* a trailing `!`, so the keys go through
+  --  mappings. Diffview remaps `zR`/`zM` inside its diff buffers to keep the
+  --  folds of the two windows in sync; `normal!` would bypass that.
+  --  See `:help :normal`
+  vim.keymap.set('n', '<leader>z', function()
+    local closed = vim.wo.foldlevel == 0
+    vim.cmd('normal ' .. (closed and 'zR' or 'zM'))
+  end, { desc = 'Toggle all folds (unchanged diff lines / code blocks)' })
 
   -- Diagnostic Config & Keymaps
   --  See `:help vim.diagnostic.Opts`
@@ -271,6 +310,29 @@ do
     desc = 'Highlight when yanking (copying) text',
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
+  })
+
+  -- Keep diff windows folded
+  --  'foldlevelstart' (SECTION 1) opens every fold when a file is opened, which
+  --  is what you want for source code but not for a diff: entering |diff-mode|
+  --  (`:diffthis`, `<leader>hD` from gitsigns, ...) switches the window to
+  --  `foldmethod=diff`, where every *unchanged* region of the file is a fold,
+  --  and those are far more useful closed. Diffview already does this for its
+  --  own windows; this covers every other way of entering diff mode.
+  --
+  --  `OptionSet` runs right after an option was changed, and `v:option_new`
+  --  holds the value it was changed to (a boolean for 'diff'). The extra
+  --  `vim.wo.diff` check makes sure the current window really is the one that
+  --  just entered diff mode. Use `<leader>z` to unfold it all again.
+  --  See `:help OptionSet` and `:help diff-mode`
+  vim.api.nvim_create_autocmd('OptionSet', {
+    desc = 'Close the folds over unchanged lines when entering diff mode',
+    group = vim.api.nvim_create_augroup('kickstart-diff-folds', { clear = true }),
+    pattern = 'diff',
+    callback = function()
+      local turned_on = vim.v.option_new and vim.v.option_new ~= '0'
+      if turned_on and vim.wo.diff then vim.wo.foldlevel = 0 end
+    end,
   })
 end
 
@@ -928,7 +990,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'cpp', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
@@ -941,8 +1003,27 @@ do
 
     -- Enable treesitter based folds
     -- For more info on folds see `:help folds`
-    -- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    -- vim.wo.foldmethod = 'expr'
+    --
+    -- `vim.treesitter.foldexpr()` reports a fold level for every line, derived
+    -- from the `folds.scm` query of the language. For C/C++ that query marks
+    -- functions, `if`/`else`, loops, `switch`, structs and so on, so those
+    -- become foldable without any per-language configuration.
+    --
+    -- NOTE: 'foldexpr' and 'foldmethod' are window options, and this runs on
+    -- `FileType`, which may fire for a buffer that is not in the current
+    -- window (the parser can also be installed asynchronously below). So set
+    -- them on every window currently showing this buffer, using the
+    -- `vim.wo[win][0]` form: the `[0]` means "the value local to the buffer in
+    -- that window", which keeps the setting from leaking into the next file
+    -- opened in the same window. See `:help vim.wo`
+    for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+      -- Diff windows (Diffview, `:diffthis`) must keep `foldmethod=diff`, which
+      -- is what folds away every unchanged region of the diff. Leave them be.
+      if not vim.wo[win].diff then
+        vim.wo[win][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+        vim.wo[win][0].foldmethod = 'expr'
+      end
+    end
 
     -- Check if treesitter indentation is available for this language, and if so enable it
     -- in case there is no indent query, the indentexpr will fallback to the vim's built in one
