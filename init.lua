@@ -112,7 +112,10 @@ do
   --  Experiment for yourself to see if you like it!
   vim.o.relativenumber = true
   -- Show absolute line number followed by relative line number, e.g. "  12   3"
-  vim.o.statuscolumn = '%s%=%{v:lnum} %{v:relnum} '
+  -- %s: gitsigns space
+  -- %=: right-aligns everything after it against the text.
+  -- %=%{v:lnum} line number (absolute) relnum:line number(relative) 
+  vim.o.statuscolumn = "%s%=%{v:lnum} %{printf('%2d', min([v:relnum, 99]))}\u{258f}"
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -187,10 +190,13 @@ do
   --  See `:help hlsearch`
   vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
-  -- Toggle line numbers (absolute + relative) on/off, across all windows/tabs
+  -- Toggle line numbers (absolute + relative) on/off, across all windows/tabs.
+  -- Capture the 'statuscolumn' that section 1 set rather than repeating its
+  -- format string here, so toggling off and back on cannot restore a stale one.
+  local saved_statuscolumn = vim.o.statuscolumn
   vim.keymap.set('n', '<leader>tl', function()
     local enabled = not vim.o.number
-    local statuscolumn = enabled and '%s%=%{v:lnum} %{v:relnum} ' or ''
+    local statuscolumn = enabled and saved_statuscolumn or ''
 
     -- Update the global default so future splits/tabs pick it up too
     vim.o.number = enabled
