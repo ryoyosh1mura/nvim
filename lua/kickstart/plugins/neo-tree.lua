@@ -17,6 +17,15 @@ require('neo-tree').setup {
       },
     },
   },
+  default_component_configs = {
+    git_status = {
+      symbols = {
+        conflict = '!',
+        modified = 'M',
+        unstaged = '',
+      },
+    },
+  },
 }
 
 vim.keymap.set('n', '<leader>e', '<Cmd>Neotree toggle<CR>', { desc = 'Toggle [E]xplorer', silent = true })
