@@ -722,16 +722,43 @@ do
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
-    -- clangd = {},
+    clangd = {},
     -- gopls = {},
-    -- pyright = {},
-    -- rust_analyzer = {},
+    pyright = {},
+    rust_analyzer = {},
     --
     -- Some languages (like typescript) have entire language plugins that can be useful:
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {},
+
+    -- Catalog of other servers. Uncomment a line to install and enable it:
+    -- Mason downloads the matching package the next time Neovim starts.
+    -- Server names are the ones listed in `:help lspconfig-all`.
+    -- None of these format on save; formatting still only runs on `<leader>f`.
+
+    -- Build systems
+    -- cmake = {},      -- CMakeLists.txt (Python package: cmake-language-server)
+    -- neocmake = {},   -- Alternative CMake server; enable only one of the two
+
+    -- Scripting
+    -- bashls = {},     -- Bash / sh / zsh scripts (needs node)
+    -- ruff = {},       -- Python linter and import fixer; use alongside pyright
+
+    -- Web
+    -- html = {},       -- HTML (needs node)
+    -- cssls = {},      -- CSS / SCSS / Less (needs node)
+    -- eslint = {},     -- JavaScript / TypeScript linter; needs a project config file
+
+    -- Data and config files
+    -- jsonls = {},     -- JSON with schema validation (needs node)
+    -- yamlls = {},     -- YAML with schema validation (needs node)
+    -- taplo = {},      -- TOML
+    -- dockerls = {},   -- Dockerfile (needs node)
+
+    -- Docs
+    marksman = {},   -- Markdown: link and heading navigation
 
     stylua = {}, -- Used to format Lua code
 
@@ -838,7 +865,7 @@ do
     },
   }
 
-  vim.keymap.set({ 'n', 'v' }, '<leader>f', function() require('conform').format { async = true } end, { desc = '[F]ormat buffer' })
+  -- vim.keymap.set({ 'n', 'v' }, '<leader>f', function() require('conform').format { async = true } end, { desc = '[F]ormat buffer' })
 end
 
 -- ============================================================
