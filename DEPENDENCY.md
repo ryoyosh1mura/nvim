@@ -21,4 +21,8 @@ grep cargo ~/.zshrc
 # ないなら追記
 echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc
 ```
+## json
 
+```sh
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build
+```
