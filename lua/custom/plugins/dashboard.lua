@@ -75,8 +75,16 @@ starter.setup {
     { name = 'New file', action = 'enew', section = 'Actions' },
     -- `require` is deferred inside the action so telescope only has to
     -- load when this item is actually picked, not at every startup.
-    { name = 'Find file', action = function() require('telescope.builtin').find_files() end, section = 'Actions' },
-    { name = 'Edit config', action = function() vim.cmd.edit(vim.fn.stdpath 'config' .. '/init.lua') end, section = 'Actions' },
+    {
+      name = 'Find file',
+      action = function() require('telescope.builtin').find_files() end,
+      section = 'Actions',
+    },
+    {
+      name = 'Edit config',
+      action = function() vim.cmd.edit(vim.fn.stdpath 'config' .. '/init.lua') end,
+      section = 'Actions',
+    },
     { name = 'Quit Neovim', action = 'qa', section = 'Actions' },
     starter.sections.recent_files(5, false),
   },
