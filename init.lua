@@ -967,6 +967,11 @@ do
   local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
   require('nvim-treesitter').install(parsers)
 
+  -- Open every buffer with all folds expanded (use `zc`, `zM`, etc. to close them)
+  -- Set this to 0 instead if you prefer buffers to start with all folds closed
+  --  See `:help 'foldlevelstart'`
+  vim.o.foldlevelstart = 99
+
   ---@param buf integer
   ---@param language string
   local function treesitter_try_attach(buf, language)
@@ -977,8 +982,8 @@ do
 
     -- Enable treesitter based folds
     -- For more info on folds see `:help folds`
-    -- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    -- vim.wo.foldmethod = 'expr'
+    vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+    vim.wo.foldmethod = 'expr'
 
     -- Check if treesitter indentation is available for this language, and if so enable it
     -- in case there is no indent query, the indentexpr will fallback to the vim's built in one
