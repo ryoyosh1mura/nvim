@@ -22,6 +22,18 @@ require('codediff').setup {
     -- Open every diff inline by default. `t` still switches to side-by-side.
     layout = 'inline',
   },
+  -- Darker diff backgrounds so comments (and other dim text) stay readable on them.
+  --  The defaults borrow the colorscheme's `DiffAdd` / `DiffDelete`, which are fairly bright.
+  highlights = {
+    -- (2) Line backgrounds, set directly. Values are a darker version of
+    --  tokyonight-night's DiffAdd (#243e4a) / DiffDelete (#4a272f).
+    line_insert = '#1c2b33',
+    line_delete = '#2f1e23',
+    -- (1) Changed-character backgrounds are derived from the line colors above:
+    --  each RGB channel is multiplied by this factor. Default is 1.4 on dark backgrounds.
+    --  Lower it for darker (calmer) highlights, raise it to make changes stand out more.
+    char_brightness = 1.25,
+  },
 }
 
 -- Document the new key chain in which-key. `add()` may be called any number of

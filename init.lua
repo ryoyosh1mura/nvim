@@ -425,6 +425,24 @@ do
   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
   vim.cmd.colorscheme 'tokyonight-night'
 
+
+  -- Kanagawa: a dark theme inspired by Katsushika Hokusai's painting.
+  --  See `:help kanagawa` and https://github.com/rebelot/kanagawa.nvim
+  -- vim.pack.add { gh 'rebelot/kanagawa.nvim' }
+  -- require('kanagawa').setup {
+  -- transparent = true, -- Let the WezTerm background (and its opacity) show through
+  --  commentStyle = { italic = false }, -- Same as before: no italics in comments
+  --  colors = {
+  --    theme = {
+        -- The sign/number column has its own background by default; drop it so
+        --  it matches the transparent editor background.
+  --      all = { ui = { bg_gutter = 'none' } },
+  --    },
+  --  },
+  --}
+  -- Styles: 'kanagawa-wave' (default), 'kanagawa-dragon' (darker), 'kanagawa-lotus' (light)
+  --vim.cmd.colorscheme 'kanagawa-dragon'
+
   -- Highlight todo, notes, etc in comments
   vim.pack.add { gh 'folke/todo-comments.nvim' }
   require('todo-comments').setup { signs = false }
